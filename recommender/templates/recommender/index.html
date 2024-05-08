@@ -1,0 +1,115 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Book Recommendations</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+        <link href="{% static 'recommender/styles.css' %}" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="{% static 'recommender/pie_chart.js' %}"></script>
+        <script src="{% static 'recommender/satisfaction_chart.js' %}"></script>
+        <script src="{% static 'recommender/feedback_form.js' %}"></script>
+    </head>
+    <body>
+        <div class="text-center mt-5">
+            <h3>Welcome to Scott's Book Recommendation System!</h3>
+            <p>Type the name of a book that you enjoyed. We'll recommend some similar books.</p>
+            <form method="post" class="mb-3">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="bookInput" class="sr-only">Book Title</label>
+                    <div class="col-md-6 offset-md-3">
+                        <input type="text" class="form-control" id="bookInput" name="book" list="books_list" placeholder="Enter a book title">
+                        <datalist id="books_list">
+                            {% for book in books %}
+                            <option value="{{ book }}"></option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                </div>
+                <input type="submit" class="btn btn-primary" value="Find recommendations!">
+            </form>
+        </div>
+        
+        {% if recommended_books %}
+        <div class="container">
+            <div class="row">
+                <div class="col-md-9">
+                    <h4>Book recommendations based on {{ book_title }}:</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Book Title</th>
+                                    <th>Similarity Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for book, score in recommended_books %}
+                                    <tr>
+                                        <td><a href="{{ book.url }}" target="_blank" rel="noopener noreferrer">{{ book.title }}</a></td>
+                                        <td>{{ score }}%</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <h4>Similarity Score Distribution:</h4>
+                    <canvas id="pieChart" width="400" height="400"
+                    data-very_high="{{ very_high }}"
+                    data-high="{{ high }}"
+                    data-medium="{{ medium }}"
+                    data-low="{{ low }}"></canvas>
+                    <br>
+                    <h4>Customer satisfaction:</h4>
+                    <canvas id="satisfactionChart" width="400" height="400"
+                    data-yes_count="{{ yes_count }}"
+                    data-no_count="{{ no_count }}"></canvas>
+                    <br>
+                    <form id="feedbackForm" method="post">
+                        <label for="response">Are you satisfied with these recommendations?</label><br>
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="yes" name="response" value="yes">
+                                    <label class="form-check-label" for="yes">Yes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="no" name="response" value="no">
+                                    <label class="form-check-label" for="no">No</label>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-primary" id="submitFeedback">Submit</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="feedbackSent" class="alert alert-success" style="display: none;">
+                        Thanks for sharing your feedback!
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% if request.method == "POST" and book_not_found %}
+            <div class="container">
+                <div class="alert alert-danger" role="alert">
+                    <strong>Error:</strong> Book not found. Please check your spelling or try again with a different book title.
+                </div>
+            </div>
+        {% endif %}
+    </body>
+    <div class="container">
+        <footer class="footer rounded">
+            <div class="text-center mt-2">
+                <p>Want to learn more about how we generate book recommendations? <a href="about">Click here!</a></p>
+            </div>
+        </footer>
+    </div>
+</html>
